@@ -118,9 +118,11 @@ function bindEvents() {
   els.searchBox.addEventListener("input", renderBreadList);
   els.clearQtyBtn.addEventListener("click", () => {
     quantities = {};
+    activeSubmissionId = null;
     renderBreadList();
     renderBasketSummary();
-    showToast("Selection cleared");
+    renderMyOrder();
+    showToast("Selection cleared. New order mode started.");
   });
 
   els.submitOrderBtn.addEventListener("click", submitOrder);
@@ -135,7 +137,7 @@ function bindEvents() {
 function setTodayDefaults() {
   const today = new Date().toISOString().slice(0, 10);
   els.newOrderDate.value = today;
-  els.newOrderTitle.value = `Bread order for ${today}`;
+  els.newOrderTitle.value = "Bread order";
 }
 
 async function initStorage() {
@@ -323,15 +325,14 @@ async function submitOrder() {
 
   const nameKey = normalizeName(name);
   const existing = findSubmissionByNameKey(nameKey);
-  const localKey = localSubmissionKey(state.activeOrder.id);
-  const savedId = localStorage.getItem(localKey);
   const activeSubmission = activeSubmissionId ? state.submissions?.[activeSubmissionId] : null;
-  const savedSubmission = savedId ? state.submissions?.[savedId] : null;
 
   let submissionId;
   let existingCreatedAt;
   let isUpdate = false;
 
+  // Same name means edit/update that person's previous order.
+  // Different name always creates a separate order, even from the same phone/PC.
   if (existing) {
     submissionId = existing.id;
     existingCreatedAt = existing.data?.createdAt || Date.now();
@@ -339,10 +340,6 @@ async function submitOrder() {
   } else if (activeSubmission && activeSubmission.nameKey === nameKey) {
     submissionId = activeSubmissionId;
     existingCreatedAt = activeSubmission.createdAt || Date.now();
-    isUpdate = true;
-  } else if (savedSubmission && savedSubmission.nameKey === nameKey) {
-    submissionId = savedId;
-    existingCreatedAt = savedSubmission.createdAt || Date.now();
     isUpdate = true;
   } else {
     submissionId = generateId();
@@ -360,7 +357,6 @@ async function submitOrder() {
 
   await saveSubmission(state.activeOrder.id, submissionId, payload);
   activeSubmissionId = submissionId;
-  localStorage.setItem(localKey, submissionId);
   showToast(isUpdate ? "Order updated" : "Order submitted");
   switchTab("myOrderTab");
 }
@@ -383,20 +379,23 @@ function findOrderByName() {
   activeSubmissionId = found.id;
   quantities = { ...found.data.items };
   els.customerName.value = found.data.name;
-  localStorage.setItem(localSubmissionKey(state.activeOrder.id), found.id);
   renderAll();
   showToast("Order loaded for editing");
 }
 
 function loadSavedSubmissionForActiveOrder() {
-  activeSubmissionId = null;
-  if (!state.activeOrder) return;
-  const savedId = localStorage.getItem(localSubmissionKey(state.activeOrder.id));
-  if (savedId && state.submissions?.[savedId]) {
-    activeSubmissionId = savedId;
-    quantities = { ...(state.submissions[savedId].items || {}) };
-    els.customerName.value = state.submissions[savedId].name || els.customerName.value;
+  // Do not auto-load the last order after refresh.
+  // A refreshed page should start as a clean form.
+  if (!state.activeOrder) {
+    activeSubmissionId = null;
+    quantities = {};
+    return;
   }
+
+  // Keep the currently submitted/loaded order during the same browsing session,
+  // but do not restore any old order from localStorage.
+  if (activeSubmissionId && state.submissions?.[activeSubmissionId]) return;
+  activeSubmissionId = null;
 }
 
 function renderMyOrder() {
@@ -434,7 +433,7 @@ function unlockAdmin() {
 async function createActiveOrder() {
   if (!adminUnlocked) return showToast("Unlock admin first");
   const orderDate = els.newOrderDate.value || new Date().toISOString().slice(0, 10);
-  const title = els.newOrderTitle.value.trim() || `Bread order for ${orderDate}`;
+  const title = els.newOrderTitle.value.trim() || "Bread order";
 
   if (state.activeOrder && !confirm("This will replace the current active order. Archive it first if you need to keep it. Continue?")) return;
 
