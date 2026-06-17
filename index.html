@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6efe5">
+  <title>Community Bread Order</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Community order</p>
+        <h1>Bread Order</h1>
+      </div>
+      <span id="connectionStatus" class="status-pill offline">Starting</span>
+    </header>
+
+    <section class="active-card">
+      <div>
+        <h2 id="activeOrderTitle">No active order</h2>
+        <p id="activeOrderMeta">The order manager can create one in the Admin panel.</p>
+      </div>
+      <button id="refreshBtn" class="ghost small" type="button">Refresh</button>
+    </section>
+
+    <nav class="tabs" aria-label="App sections">
+      <button class="tab active" type="button" data-tab="orderTab">Order</button>
+      <button class="tab" type="button" data-tab="myOrderTab">My order</button>
+      <button class="tab" type="button" data-tab="adminTab">Admin</button>
+      <button class="tab" type="button" data-tab="archiveTab">Archive</button>
+    </nav>
+
+    <section id="orderTab" class="panel active">
+      <div id="noActiveNotice" class="notice">
+        No active order yet. The order manager should create one in the Admin panel first.
+      </div>
+
+      <label class="field-label" for="customerName">Your name</label>
+      <input id="customerName" class="input" type="text" autocomplete="name" placeholder="e.g., Waqar">
+      <p class="hint">Use the same name later if you need to edit your order.</p>
+
+      <div class="toolbar">
+        <input id="searchBox" class="input" type="search" placeholder="Search by code, bread name, or category">
+        <button id="clearQtyBtn" class="ghost" type="button">Clear</button>
+      </div>
+
+      <div id="basketSummary" class="summary-bar">No items selected</div>
+      <div id="breadList" class="bread-list"></div>
+
+      <div class="sticky-submit">
+        <button id="submitOrderBtn" class="primary" type="button" disabled>Submit / Update order</button>
+      </div>
+    </section>
+
+    <section id="myOrderTab" class="panel">
+      <h2>View or edit your submitted order</h2>
+      <p class="hint">Enter the same name used when placing the order.</p>
+      <div class="inline-row">
+        <input id="lookupName" class="input" type="text" placeholder="Name used for order">
+        <button id="findOrderBtn" class="primary" type="button">Find</button>
+      </div>
+      <div id="myOrderResult" class="result-card">
+        <p class="muted">No submitted order loaded yet.</p>
+      </div>
+    </section>
+
+    <section id="adminTab" class="panel">
+      <div id="adminGate" class="admin-card">
+        <h2>Admin panel</h2>
+        <p class="hint">Enter the admin PIN to create orders, copy the vendor summary, and archive orders.</p>
+        <div class="inline-row">
+          <input id="adminPin" class="input" type="password" inputmode="numeric" placeholder="Admin PIN">
+          <button id="unlockAdminBtn" class="primary" type="button">Unlock</button>
+        </div>
+      </div>
+
+      <div id="adminControls" hidden>
+        <section class="admin-card">
+          <h2>Create active order</h2>
+          <label class="field-label" for="newOrderDate">Order date</label>
+          <input id="newOrderDate" class="input" type="date">
+          <label class="field-label" for="newOrderTitle">Order title</label>
+          <input id="newOrderTitle" class="input" type="text" placeholder="Bread order for Friday">
+          <button id="createOrderBtn" class="primary full" type="button">Create active order</button>
+        </section>
+
+        <section class="admin-card">
+          <div class="split-title">
+            <h2>Vendor summary</h2>
+            <span class="mini-pill"><span id="submissionCount">0</span> orders</span>
+          </div>
+          <p class="hint">This list combines bread quantities only. Customer names are excluded.</p>
+          <textarea id="compiledSummary" class="textarea" readonly></textarea>
+          <button id="copySummaryBtn" class="primary full" type="button">Copy vendor summary</button>
+        </section>
+
+        <section class="admin-card">
+          <h2>Submitted orders</h2>
+          <div id="submissionList"></div>
+        </section>
+
+        <section class="danger-zone">
+          <h2>Archive active order</h2>
+          <p class="hint">This moves the current active order to the archive and clears the active order screen.</p>
+          <button id="archiveOrderBtn" class="danger" type="button">Archive active order</button>
+        </section>
+      </div>
+    </section>
+
+    <section id="archiveTab" class="panel">
+      <h2>Archived orders</h2>
+      <div id="archiveList"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

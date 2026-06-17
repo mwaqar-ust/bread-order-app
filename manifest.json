@@ -1,0 +1,9 @@
+{
+  "name": "Community Bread Order",
+  "short_name": "Bread Order",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6efe5",
+  "theme_color": "#f6efe5",
+  "icons": []
+}
