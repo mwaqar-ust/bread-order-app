@@ -325,8 +325,29 @@ async function submitOrder() {
   const existing = findSubmissionByNameKey(nameKey);
   const localKey = localSubmissionKey(state.activeOrder.id);
   const savedId = localStorage.getItem(localKey);
-  const submissionId = activeSubmissionId || savedId || existing?.id || generateId();
-  const existingCreatedAt = existing?.data?.createdAt || Date.now();
+  const activeSubmission = activeSubmissionId ? state.submissions?.[activeSubmissionId] : null;
+  const savedSubmission = savedId ? state.submissions?.[savedId] : null;
+
+  let submissionId;
+  let existingCreatedAt;
+  let isUpdate = false;
+
+  if (existing) {
+    submissionId = existing.id;
+    existingCreatedAt = existing.data?.createdAt || Date.now();
+    isUpdate = true;
+  } else if (activeSubmission && activeSubmission.nameKey === nameKey) {
+    submissionId = activeSubmissionId;
+    existingCreatedAt = activeSubmission.createdAt || Date.now();
+    isUpdate = true;
+  } else if (savedSubmission && savedSubmission.nameKey === nameKey) {
+    submissionId = savedId;
+    existingCreatedAt = savedSubmission.createdAt || Date.now();
+    isUpdate = true;
+  } else {
+    submissionId = generateId();
+    existingCreatedAt = Date.now();
+  }
 
   const payload = {
     id: submissionId,
@@ -340,7 +361,7 @@ async function submitOrder() {
   await saveSubmission(state.activeOrder.id, submissionId, payload);
   activeSubmissionId = submissionId;
   localStorage.setItem(localKey, submissionId);
-  showToast(existing ? "Order updated" : "Order submitted");
+  showToast(isUpdate ? "Order updated" : "Order submitted");
   switchTab("myOrderTab");
 }
 
